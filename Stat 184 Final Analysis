@@ -1,0 +1,79 @@
+Comparison of Party Identification by Religious Affiliation and Practice
+
+Plan
+The goal of these visuals is to examine how political party identification (Democrat vs Republican) varies across different dimensions of religion using the 2024 ANES data. Specifically, the analysis compares party identification across three religious variables: religious affiliation (denomination), perceived importance of religion in life, and frequency of religious attendance.
+This allows us to explore whether religion is associated not just with belief systems, but also with political alignment. The focus is on comparing proportions of Democrats and Republicans within each religious category rather than raw counts.
+To conduct this analysis, I used the 2024 ANES dataset and selected four variables: party vote, religious affiliation, religious importance, and religious attendance. I used tidyverse tools for cleaning, recoding, summarizing, and visualizing the data, along with knitr and kableExtra for table presentation.
+
+Steps
+1. Open R
+2. Load required libraries: tidyverse, rvest, dplyr, esquisse, plotly, knitr, kableExtra, haven
+3. Load the 2024 ANES dataset using read_dta()
+4. Select the four variables of interest:
+  Party vote (V242067)
+  Religion (V241422)
+  Importance of religion (V241420)
+  Religious attendance (V241440)
+5. Remove missing, refused, don’t know, and inapplicable responses
+6. Recode:
+  Party vote into Democrat, Republican, and Other
+  Religion into named categories (e.g., Protestant, Catholic, Jewish, etc.)
+  Importance of religion into ordered levels from “Not Important” to “Extremely Important”
+  Attendance into ordered frequency categories from “Never” to “More than once a week”
+7. Drop remaining NA values
+8. Filter dataset to only include Democrats and Republicans for comparison
+9. Group data by religious category and party
+10. Count responses within each group
+11. Compute proportions within each religious category
+12. Repeat the same process for:
+ Importance of religion
+ Religious attendance
+13. Create three summary tables using kable() and kable_classic()
+14. Create visualizations using ggplot2:
+ Stacked diverging bar charts (Democrats negative, Republicans positive)
+15. Combine all three variables into a faceted plot using facet_wrap()
+16. Format axes, labels, and color scheme (Democrat = blue, Republican = red)
+
+Data Description
+The 2024 ANES dataset provides survey responses on political behavior, ideology, and demographic characteristics. For this analysis, I focused on:
+    Presidential Vote (V242067): who the respondent voted for president
+    Religious Affiliation (V241422): denomination or belief category
+    Religious Importance (V241420): subjective importance of religion in daily life
+    Religious Attendance (V241440): frequency of attending religious services
+These variables allow for a multi-dimensional view of religion beyond simple denomination, capturing both belief intensity and behavioral participation.
+
+Tables
+Three tables were created to summarize the relationship between religion and party identification:
+1. Party Vote by Religious Affiliation
+This table shows the proportion of Democrats and Republicans within each religious group.
+
+2. Party Vote by Importance of Religion
+This table shows how party identification varies by how important respondents say religion is in their lives.
+
+3. Party Vote by Religious Attendance
+This table shows how political identification varies by frequency of attending religious services.
+
+Each table reports:
+  Count of respondents
+  Proportion of Democrats vs Republicans within each category
+
+NA values and non-Republican/Democrat responses were removed to focus the comparison.
+
+Table Analysis
+Across all three tables, clear patterns emerge between religion and political affiliation.
+Religious affiliation shows variation in party identification, with some traditions leaning more Democratic and others more Republican with varying intensity. However, the strongest differences appear when looking at religious behavior rather than denomination alone.
+Religious importance shows a noticeable shift: respondents who say religion is “Extremely Important” tend to be more Republican-leaning, while those who report lower importance show more Democratic support.
+Religious attendance follows a similar pattern. More frequent attendance is associated with higher Republican identification, while infrequent or no attendance corresponds more strongly with Democratic identification, though the difference is smaller than it is for religious importance.
+Overall, behavioral measures of religion (importance and attendance) appear to more strongly predict party identification than religious denomination alone.
+
+Visualization Description
+The final visualization combines all three dimensions—religious affiliation, importance, and attendance—into a single faceted figure.
+Each subplot displays a diverging bar chart where:
+  Republican identification is shown in red (positive values)
+  Democratic identification is shown in blue (negative values)
+  The center line represents balance between the two parties
+This format allows for direct comparison of political balance across the different religious dimensions.
+The plot shows that:
+  Higher religious engagement (importance and attendance) is associated with stronger Republican identification
+  Lower religious engagement is associated with stronger Democratic identification
+  Religious denomination differences exist but are less consistent than behavioral measures
