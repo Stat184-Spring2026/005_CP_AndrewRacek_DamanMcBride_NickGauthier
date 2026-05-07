@@ -1,0 +1,1174 @@
+---
+title: "Final Project"
+author: "Nick Gauthier, Daman McBride, Andrew Racek"
+date: "May 5, 2026"
+format: pdf
+execute: 
+  echo: false
+  warning: false
+---
+
+# Plan
+
+The goal of this quarto document is to create a pdf that will have four sections. The first section will intro the data set, describing it case and case attributes and how it meets FAIR and CARE standards. The second section will compare who people said they would vote for before the election and who they said they voted for after the 2024 presidential election with the actual results from the 2024 presidential election. The third section will . The last section will
+
+# Data Set Introduction
+
+The data we will use in our analysis comes from the American National Election Studies (ANES). ANES releases their data every election year, where they ask \~5,000 people a wide range of questions both before and after the election. A case in this data set is a single eligible US voter that took part in this survey. The data set contains \~1,700 case attributes which ask the survey respondent many different questions and will usually give the answer in the form of a number which corresponds to a set of multiple choice answers. Some of the questions are only asked based on previous answers so if the answer is -1 in the data set it is because that question was not asked to that respondent. We each picked a different topic that we wanted to cover using this data set and will elaborate on the specific case attributes we picked in each of our sections. ANES follows the FAIR principles of findable, accessible, interoperable, and reusable as it publicly available data set that can be downloaded straight from their website using a dta file. It has a rich code book that is necessary to see what question each column asks and what number the respondent answered with corresponds to. ANES follows the CARE principles of collective benefit, authority to control, responsibility, and ethics helps people understand how people are feeling on a wide range of topics relating to the election while dealing with being about politics, which is a sensitive issue and people may have privacy concerns over sharing their opinions on this topic.
+
+# Comparison of Election Results to Pre and Post Election Polling
+
+## Plan
+
+The goals of these visuals are to compare the 2024 ANES data to the actual presidential election by comparing the proportion of votes each candidate received in the actual election to both the pre-election polling and the post-election polling.
+
+To do this we need the 2024 ANES data, along with the actual election results, which required both the 2024 Presidential General Election Results and the Total Number of Registered Voters which I got both from two separate tables from the Atlas of US Elections. We also need to library tidyverse, rvest, dplyr, esquisse, plotly, knitr, kableExtra, and haven. Some functions we need include read_dta, read_html, select, mutate, filter, count, recode, rename, full_join, group_by, summarize, bind_cols, pivot_longer, kable, kable_classic, and ggplot.
+
+Steps
+
+1.  Open R
+2.  Library haven, tidyverse, rvest, dplyr, esquisse, plotly, knitr, and kableExtra
+3.  Use read_dta to store all of the ANES 2024 data
+4.  Select just the 8 questions that deal with who people voted for pre and post election along with if they voted early
+5.  Mutate the answers from these questions to be numeric
+6.  Use select and filter to first only find the answers for whole people voted for if they voted early
+7.  Use count to get the count for each possible answer
+8.  Mutate to recode the numerical values to the candidate they correspond to
+9.  Rename the column with the candidate names from its general name to Candidate
+10. Repeat steps 6 through 10, this time selecting and filtering for the pre election polling from non-early voters
+11. Use full_join to combine the pre-election polling with the early voters
+12. Use summarize and mutate to calculate the proportion of votes each candidate received in the pre election polling and early voter polling
+13. Repeat steps 6 through 10 this time selecting and filtering for the post election polling from non-early voters
+14. Repeat steps 11 and 12 but with the post election polling from non-early voters with the early voter data to get the proportion of votes by candidate for post election
+15. Use read_html and bind_cols to scrape the election results from the US Election Atlas
+16. Split this data in two data frames, one that contains the 5 major candidates and the other that contains all other vote receivers
+17. Use mutate, group_by, and summarize to combine the data from non-major vote receivers into one row containing the sum of all the non-major votes
+18. Use read_html and bind_cols to scrape the number of registered voters data
+19. Select the required columns and mutate to make the numbers numeric
+20. Use mutate to subtract total votes from total eligible voters to get the number of people who did not vote
+21. Use full_join to combine the major candidate votes with the one row of non major votes and the one row of non voters
+22. Mutate to find the proportion of votes by candidate
+23. Use full_join to combine the pre-election data with the post-election data and the actual election results into one data frame
+24. Use mutate to round the proportions and select to reorder the columns
+25. To create the table use kable and kable_classic to give the table a title, align each column centrally, set the font size, and alternate the background row color
+26. Use pivot_longer to put all of the proportions across each of the three groups into one column where the time of the proportion goes to beforePostReal
+27. Create a plot where X is beforePostReal, Y is the proportions, and it is both grouped and colored by candidate. Use both geom_line and geom_point to make points for each proportion and connect them for each of the three times data was collected. Use labs to rename the axes and give the plot a title
+
+## More Information 
+
+The 9 questions I needed to get the voter data from this survey were
+
+1.  V241035, which asks "PRE: ALREADY VOTED IN GENERAL ELECTION"
+2.  V241036, which asks "PRE: CONFIRMATION VOTED (EARLY) IN NOVEMBER 5 ELECTION"
+3.  V241038, which asks "PRE: DID R VOTE FOR PRESIDENT"
+4.  V241039, which asks "PRE: FOR WHOM DID R VOTE FOR PRESIDENT"
+5.  V241042, which asks "PRE: DOES R INTEND TO VOTE FOR PRESIDENT"
+6.  V241043, which asks "PRE: FOR WHOM DOES R INTEND TO VOTE FOR PRESIDENT"
+7.  V242065, which asks "POST: DID R VOTE IN THE 2024 ELECTION"
+8.  V242066, which asks "POST: DID R VOTE FOR PRESIDENT"
+9.  V242067, which asks "POST: FOR WHOM DID R VOTE FOR PRESIDENT"
+
+The answers to these questions were all in integers, which corresponded to an answer found in the code book. Additional data was need from the US Election Atlas to compare the actual election results. I used two different tables from the US Election Atlas but in both each case represents one eligible US voter. In the Election results table it has columns for the candidate name, the candidate's vice president, the candidate's party, the popular votes received as a number and percentage, and the electoral votes received as a number and percentage. This table shows who eligible voters voted for but we need another table to find the total number of eligible voters to find the number of total eligible voters who did not vote. The second table shows the number of registered voters and number of people who voted by state with columns showing a map of the state, a pie percentage, the state name, the total voting age population, the number of registered voters, the number of votes, the percentage of voting age population that voted, and the percentage of registered voters that voted. The US Election Atlas follows FAIR principles of findable, accessible, interoperable, and reusable as it was easy to access online and the data did not require any initial cleaning, just manipulation to select the values I required. It also follows CARE principles of collective benefit, authority to control, responsibility, and ethics as it showed voter data which is important to help people learn about election results while also protecting the privacy of those who voted by not showing who any individual person voted for. My data analysis was exploratory as I did not know what I wanted to compare when initially looking at the ANES data. I used tidyverse as I needed to mutate the data from the US Election Atlas to compare it to the ANES data.
+
+```{r}
+#install.packages("haven")
+library("haven")
+data2024 <- read_dta("anes_timeseries_2024_stata_20250808 (1).dta")
+#data2020 <- read_dta("anes_timeseries_2020_stata_20220210.dta")
+
+library(tidyverse)
+library(rvest)
+library(dplyr)
+library(esquisse)
+library(plotly)
+library(knitr)
+library(kableExtra)
+
+
+nickData <- data2024 |>
+  #Here are the 9 questions I need to get the voter data from this survey
+  #V241035 asks "PRE: ALREADY VOTED IN GENERAL ELECTION"
+  #V241036 asks "PRE: CONFIRMATION VOTED (EARLY) IN NOVEMBER 5 ELECTION"
+  #V241038 asks "PRE: DID R VOTE FOR PRESIDENT"
+  #V241039 asks "PRE: FOR WHOM DID R VOTE FOR PRESIDENT"
+  #V241042 asks "PRE: DOES R INTEND TO VOTE FOR PRESIDENT"
+  #V241043 asks "PRE: FOR WHOM DOES R INTEND TO VOTE FOR PRESIDENT"
+  #V242065 asks "POST: DID R VOTE IN THE 2024 ELECTION"
+  #V242066 asks "POST: DID R VOTE FOR PRESIDENT"
+  #V242067 asks "POST: FOR WHOM DID R VOTE FOR PRESIDENT"
+  #Select and mutate these questions to make the answers numeric
+  select("V241035", "V241036", "V241038", "V241039", "V241042", "V241043", 
+         "V242065", "V242066", "V242067") |>
+  mutate(across(c(V241035, V241036, V241038, V241039, V241042, V241043, 
+                  V242065, V242066, V242067), as.numeric))
+
+
+earlyVoters <- nickData |>
+  #Filter to those who answered and confirmed they voted early
+  filter(V241035 == 1, V241036 == 1) |>
+  #Select the question did they vote and if so who did they vote for
+  select("V241038", "V241039") |>
+  #Remove those who refused to answer who they voted for
+  filter(V241039 != -9) |>
+  #Select just the who they voted for column
+  #Value will be -1 if inapplicable and because of filters only inapplicable if didn't vote
+  #Values 1 through 6 are different candidates
+  select(V241039) |>
+  #Use count to get the number of answers each value has
+  count(V241039) |>
+  #Mutate to change V241039 to Candidate Names
+  mutate(V241039 = recode(V241039,
+                          `-1` = "Did Not Vote",
+                          `1` = "Kamala D. Harris",
+                          `2` = "Donald J. Trump",
+                          `3` = "Robert F. Kennedy, Jr.",
+                          `4` = "Cornel R. West",
+                          `5` = "Jill E. Stein",
+                          `6` = "Another Candidate")) |>
+  #Use rename to change column name to Candidate
+  rename("Candidate" = V241039)
+
+
+intendedVoters <- nickData |>
+  #Filter out those who voted early
+  filter(V241035 == 2 | V241036 == 2) |>
+  #Select the question will they vote and if so who will they vote for
+  select("V241042", "V241043") |>
+  #Remove those who refused to answer or didn't know if/who to vote
+  filter(V241042 != -9, V241042 != -8, V241043 != -9, V241043 != -8) |>
+  #Select just the who they will vote for column
+  #Value will be -1 if inapplicable and because of filters only inapplicable if didn't vote
+  #Values 1 through 6 are different candidates
+  select(V241043) |>
+  #Use count to get the number of answers each value has
+  count(V241043) |>
+  #Mutate to change V241043 to Candidate Names
+  mutate(V241043 = recode(V241043,
+                          `-1` = "Did Not Vote",
+                          `1` = "Kamala D. Harris",
+                          `2` = "Donald J. Trump",
+                          `3` = "Robert F. Kennedy, Jr.",
+                          `4` = "Cornel R. West",
+                          `5` = "Jill E. Stein",
+                          `6` = "Another Candidate")) |>
+  #Use rename to change column name to Candidate
+  rename("Candidate" = V241043)
+
+
+preElectionData <- intendedVoters |>
+  #Use full_join to combine early voter data to show all pre election data
+  full_join(earlyVoters) |>
+  #group by candidate and summarize n as sum of n to add the totals together
+  group_by(Candidate) |>
+  summarize(n = sum(n)) |>
+  #Mutate to create new column seeing the proportion each candidate got
+  mutate("Pre Election Proportion" = n / sum(n)) |>
+  rename("Pre Election Voters" = n)
+
+
+postElectionVoters <- nickData |>
+  #Filter out those who voted early
+  #Do this because they weren't asked these questions in post
+  filter(V241035 == 2 | V241036 == 2) |>
+  #Select the question did they vote, did they vote for president and if so who did they vote for
+  select(V242065, V242066, V242067) |>
+  #Filter out those who did not give an answer to whether they voted
+  filter(V242065 != -9, V242065 != -8, V242065 != -7, V242065 != -6) |>
+  #Select the did they vote for president and who they voted for president columns
+  select(V242066, V242067) |>
+  #Filter out those who did not give an answer for if/who they voted 
+  filter(V242066 != -1, V242067 != -9, V242067 != -8) |>
+  #Select just the who they voted for column
+  #Value will be -1 if inapplicable and because of filters only inapplicable if didn't vote
+  #Values 1 through 6 are different candidates
+  select(V242067) |>
+  #Use count to get the number of answers each value has
+  count(V242067) |>
+  #Mutate to change V242067 to Candidate Names
+  mutate(V242067 = recode(V242067,
+                          `-1` = "Did Not Vote",
+                          `1` = "Kamala D. Harris",
+                          `2` = "Donald J. Trump",
+                          `4` = "Cornel R. West",
+                          `5` = "Jill E. Stein",
+                          `6` = "Another Candidate")) |>
+  #Use rename to change column names to Candidate and Post Election Voters
+  rename("Candidate" = V242067)
+
+
+postElectionData <- postElectionVoters |>
+  #Use full_join to combine early voter data to show all votes
+  full_join(earlyVoters) |>
+  #group by candidate and summarize n as sum of n to add the totals together
+  group_by(Candidate) |>
+  summarize(n = sum(n)) |>
+  #Mutate to create new column seeing the proportion each candidate got
+  mutate("Post Election Proportion" = n / sum(n)) |>
+  rename("Post Election Voters" = n)
+
+
+#read_html voting result
+votingResultList <- read_html(
+  x = "https://uselectionatlas.org/RESULTS/national.php?year=2024&minper=0&off=0&elect=0"
+) |>
+  html_elements(css = "table") |>
+  html_table()
+
+#bind_cols to turn votingResultList into a data frame votingResultRaw
+votingResultRaw <- bind_cols(votingResultList[[2]])
+
+#Remove first 4 rows and all rows after 30
+votingResult <- votingResultRaw[c(5:30),] |>
+  #Rename and select the columns required
+  rename("Candidate" = 2, "Election Voters" = 5) |>
+  select(Candidate, "Election Voters") |>
+  #Remove commas to convert to numeric
+  mutate(across("Election Voters", ~ gsub(",", "", .))) |>
+  mutate(across("Election Voters", as.numeric))
+
+votingMajorCandidates <- votingResult |>
+  #Filter out minor candidates
+  filter(Candidate == "Donald J. Trump" |
+           Candidate == "Kamala D. Harris" |
+           Candidate == "Robert F. Kennedy, Jr." |
+           Candidate == "Cornel R. West" |
+           Candidate == "Jill E. Stein")
+
+votingMinorCandidates <- votingResult |>
+  #Remove major candidates
+  filter(Candidate != "Donald J. Trump" &
+           Candidate != "Kamala D. Harris" &
+           Candidate != "Robert F. Kennedy, Jr." &
+           Candidate != "Cornel R. West" &
+           Candidate != "Jill E. Stein") |>
+  #Rename all renaming Candidates as same name to group
+  mutate(Candidate = "Another Candidate") |>
+  #Group by candidate and summarize Election voters to get one row 
+  #with sum of all votes from remaining candidates
+  group_by(Candidate) |>
+  summarize(`Election Voters` = sum(`Election Voters`))
+
+
+#read_html voter turnout
+voterTurnoutList <- read_html(
+  x = "https://uselectionatlas.org/RESULTS/data.php?year=2024&datatype=national&def=vto&f=0&off=0&elect=0"
+) |>
+  html_elements(css = "table") |>
+  html_table()
+
+#bind_cols to turn voterTurnoutList into a data frame voterTurnoutRaw
+voterTurnoutRaw <- bind_cols(voterTurnoutList[[3]])
+
+#Remove first 2 rows
+voterTurnout <- voterTurnoutRaw[-c(1:2),] |>
+  #Rename and select the columns required
+  rename("Candidate" = 3, "Eligible Voters" = 4, "Votes" = 6) |>
+  select(Candidate, "Eligible Voters", Votes) |>
+  #Filter candidate to get the required row
+  filter(Candidate  == "Total") |>
+  #Remove commas to convert to numeric
+  mutate(across(c("Eligible Voters", Votes), ~ gsub(",", "", .))) |>
+  mutate(across(c("Eligible Voters", Votes), as.numeric)) |>
+  #Create new column Election Voters 
+  #where the row has the value of the number of people who didn't vote
+  mutate(`Election Voters` = `Eligible Voters` - Votes) |>
+  #Mutate to change Total to Did Not Vote
+  mutate(Candidate = recode(Candidate, "Total" = "Did Not Vote")) |>
+  #Select the 2 required columns for the final table
+  select(Candidate, "Election Voters")
+
+
+electionData <- votingMajorCandidates |>
+  #Use full_join to bring all election data into one data frame
+  full_join(votingMinorCandidates) |>
+  full_join(voterTurnout) |>
+  #Create proportion column by dividing election voters by sum of all election voters
+  mutate("Election Proportion" = `Election Voters` / sum(`Election Voters`))
+
+
+allElectionData <- electionData |>
+  #Use full join by Candidate to combine all data into one data frame
+  full_join(postElectionData, by = "Candidate") |>
+  full_join(preElectionData, by = "Candidate") |>
+  #Round the proportions to 4 digits
+  mutate(across("Post Election Proportion", function(x) round(x, 4))) |>
+  mutate(across("Pre Election Proportion", function(x) round(x, 4))) |>
+  mutate(across("Election Proportion", function(x) round(x, 4))) |>
+  #Use select to reorder columns
+  select(Candidate, "Pre Election Voters", "Pre Election Proportion",
+         "Post Election Voters", "Post Election Proportion",
+         "Election Voters", "Election Proportion")
+
+
+#Use kable and kable_classic to title, align, change font, and alternate row color
+allElectionData |>
+  #Add commas back into large numbers
+  mutate(across(where(is.numeric), ~ format(.x, big.mark = ","))) |>
+  kable(
+    caption = "Votes and Proportion of Votes by Candidate",
+    align = "c",
+    format = "latex"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+```
+
+## Votes and Proportion of Votes by Candidate Table Analysis
+
+The initial table shows the number of votes each candidate received along with the proportion of the total votes they received. From the polling data we can see that Kamala D. Harris had the highest proportion in the polling data from both the pre and post election polling yet in the actual election data Donald J. Trump received another 2.3 million votes, giving him a slightly higher proportion than Kamala D. Harris. The biggest change from the survey data to the actual election was that not voting went from a small proportion in the polling data to the largest proportion in the actual election
+
+```{r}
+electionDataPlot <- allElectionData |>
+  #rename the columns to make them better names for plot
+  rename("Before" = "Pre Election Proportion", 
+         "Post" = "Post Election Proportion",
+         "Real" = "Election Proportion") |>
+  #pivot longer to have all proportions in one column 
+  #where the timing of the proportion is in another column
+  pivot_longer(cols = c("Before", "Post", "Real"),
+               names_to = "beforePostReal", 
+               values_to = "Proportion") 
+
+
+#Create plot where x is the timing, y is the proportion, and it is grouped by candidate
+ggplot(electionDataPlot, aes(x = beforePostReal, y = Proportion, group = Candidate)) +
+  #Use point to plot the proportions
+  geom_point(aes(color = Candidate)) +
+  #Use line to connect the points
+  geom_line(aes(color = Candidate)) +
+  #Use labs to give the plot a title, and rename the axes
+  labs(
+    title = "Proportion of Votes by Candidate",
+    x = "Before Election vs Post Election vs Actual Election",
+    y = "Proportion of Votes",
+    color = "Candidate") +
+  theme_bw()
+```
+
+## Proportion of Votes by Candidate Plot Description 
+
+Plot has a y value of the proportion of votes a candidate received where the x value is three different times these proportions were gathered. These points are then connected to compare the proportion of votes a candidate received across the three polling times. The plot shows that the number of people who did not vote in the polling data was a very small proportion but that proportion rose dramatically in the actual election. Polling data also had Kamala D. Harris have the highest proportion in both pre and post election data but in the actual election the highest proportion was from eligible voters not voting, following by Donald J. Trump.
+
+## Analysis of Both Visualizations
+
+When first looking at both data visualizations the clear change in proportion is seen between not voting in the surveys to not voting in the actual election. From this we learn that a lot of people when surveyed said they were going to vote for a candidate in both the pre and post election surveys but when looking at the actual election it seems that they were not motivated enough to actually go out and vote. This shows that the current methods of polling people must find additional ways to try and survey the likelihood of people actually going out and voting because when people are surveyed their answers may change from what they actually may end up voting. This is also seen in this data as in the polling Kamala D. Harris has a slight lead over Donald J. Trump but in the actual election Donald J. Trump ended up getting 2.3 million more votes. To account for the fact that people may answer differently in polls than what they may actually end up voting, surveyors must come up with new unique ways to try and get the actual answer from the people, which if I were to survey people about election data I would ask them questions like who they think will win or who they think people around them might be voting for and then comparing those to the election results to see if we get more accurate data.
+
+# Comparison of Party Identification by Religious Affiliation and Practice
+
+## Plan
+
+The goal of these visuals is to examine how political party identification (Democrat vs Republican) varies across different dimensions of religion using the 2024 ANES data. Specifically, the analysis compares party identification across three religious variables: religious affiliation (denomination), perceived importance of religion in life, and frequency of religious attendance.
+This allows us to explore whether religion is associated not just with belief systems, but also with political alignment. The focus is on comparing proportions of Democrats and Republicans within each religious category rather than raw counts.
+To conduct this analysis, I used the 2024 ANES dataset and selected four variables: party vote, religious affiliation, religious importance, and religious attendance. I used tidyverse tools for cleaning, recoding, summarizing, and visualizing the data, along with knitr and kableExtra for table presentation.
+
+Steps
+1. Open R
+2. Load required libraries: tidyverse, rvest, dplyr, esquisse, plotly, knitr, kableExtra, haven
+3. Load the 2024 ANES dataset using read_dta()
+4. Select the four variables of interest:
+  Party vote (V242067)
+  Religion (V241422)
+  Importance of religion (V241420)
+  Religious attendance (V241440)
+5. Remove missing, refused, don’t know, and inapplicable responses
+6. Recode:
+  Party vote into Democrat, Republican, and Other
+  Religion into named categories (e.g., Protestant, Catholic, Jewish, etc.)
+  Importance of religion into ordered levels from “Not Important” to “Extremely Important”
+  Attendance into ordered frequency categories from “Never” to “More than once a week”
+7. Drop remaining NA values
+8. Filter dataset to only include Democrats and Republicans for comparison
+9. Group data by religious category and party
+10. Count responses within each group
+11. Compute proportions within each religious category
+12. Repeat the same process for:
+ Importance of religion
+ Religious attendance
+13. Create three summary tables using kable() and kable_classic()
+14. Create visualizations using ggplot2:
+ Stacked diverging bar charts (Democrats negative, Republicans positive)
+15. Combine all three variables into a faceted plot using facet_wrap()
+16. Format axes, labels, and color scheme (Democrat = blue, Republican = red)
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(haven)
+
+anes_data_2024 <- read_dta("C:\\Users\\atrac\\Downloads\\anes_timeseries_2024_stata_20250808 (1).dta")
+
+religion_data <- anes_data_2024 |>
+  select(
+    party_vote = V242067,
+    religion = V241422,
+    importance = V241420,
+    attendance = V241440
+  ) |>
+  mutate(across(everything(), as.numeric))
+
+#Recode party vote
+recode_party <- function(x) {
+  recode(x,
+         `1` = "Democrat",
+         `2` = "Republican",
+         `3` = "Other",
+         `4` = "Other",
+         `5` = "Other",
+         `6` = "Other",
+         .default = NA_character_
+  )
+}
+
+
+#Recode religion
+recode_religion <- function(x) {
+  recode(x,
+         `1` = "Protestant",
+         `2` = "Roman Catholic",
+         `3` = "Orthodox Christian",
+         `4` = "Latter-Day Saints (LDS)",
+         `5` = "Jewish",
+         `6` = "Muslim",
+         `7` = "Buddhist",
+         `8` = "Hindu",
+         `9` = "Atheist/Agnostic",
+         `10` = "Atheist/Agnostic",
+         `11` = "Something Else",
+         `12` = "Nothing in Particular",
+         .default = NA_character_
+  )
+}
+
+
+#Recode importance of religion
+recode_importance <- function(x) {
+  recode(x,
+         `1` = "Extremely Important",
+         `2` = "Very Important",
+         `3` = "Moderately Important",
+         `4` = "A Little Important",
+         `5` = "Not Important",
+         .default = NA_character_
+  )
+}
+
+
+#Recode attendance
+recode_attendance <- function(x) {
+  recode(x,
+         `1` = "More than once a week",
+         `2` = "Once a week",
+         `3` = "Once or twice a month",
+         `4` = "A few times a year",
+         `5` = "Once a year",
+         `6` = "Never",
+         .default = NA_character_
+  )
+}
+
+religion_clean <- religion_data |>
+  
+  #Remove refused, don't know, and inapplicable responses
+  filter(
+    !party_vote %in% c(-9, -8, -1),
+    !religion %in% c(-9, -8, -1),
+    !importance %in% c(-9, -8, -1),
+    !attendance %in% c(-9, -8, -1)
+  ) |>
+  
+  #Apply recodes
+  mutate(
+    party = recode_party(party_vote),
+    religion = recode_religion(religion),
+    importance = recode_importance(importance),
+    attendance = recode_attendance(attendance)
+  ) |>
+  
+  drop_na() |>
+  
+  #Set ordered factors for plotting
+  mutate(
+    importance = factor(
+      importance,
+      levels = c(
+        "Not Important",
+        "A Little Important",
+        "Moderately Important",
+        "Very Important",
+        "Extremely Important"
+      )
+    ),
+    
+    attendance = factor(
+      attendance,
+      levels = c(
+        "Never",
+        "Once a year",
+        "A few times a year",
+        "Once or twice a month",
+        "Once a week",
+        "More than once a week"
+      )
+    )
+  )
+
+religion_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(religion, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(religion) |>
+  mutate(proportion = count / sum(count))
+
+religion_table |>
+  kable(
+    caption = "Party Vote by Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+importance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(importance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(importance) |>
+  mutate(proportion = count / sum(count))
+
+importance_table |>
+  kable(
+    caption = "Party Vote by Importance of Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+attendance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(attendance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(attendance) |>
+  mutate(proportion = count / sum(count))
+
+attendance_table |>
+  kable(
+    caption = "Party Vote by Religious Attendance (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+
+```
+
+## Tables Analysis
+
+Across all three tables, clear patterns emerge between religion and political affiliation.
+Religious affiliation shows variation in party identification, with some traditions leaning more Democratic and others more Republican with varying intensity. However, the strongest differences appear when looking at religious behavior rather than denomination alone.
+Religious importance shows a noticeable shift: respondents who say religion is “Extremely Important” tend to be more Republican-leaning, while those who report lower importance show more Democratic support.
+Religious attendance follows a similar pattern. More frequent attendance is associated with higher Republican identification, while infrequent or no attendance corresponds more strongly with Democratic identification, though the difference is smaller than it is for religious importance.
+Overall, behavioral measures of religion (importance and attendance) appear to more strongly predict party identification than religious denomination alone.
+
+```{r}
+religion_plot <- religion_table |>
+  
+  ggplot(aes(
+    x = religion,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religion",
+    x = "Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+religion_plot
+
+
+importance_plot <- importance_table |>
+  
+  ggplot(aes(
+    x = importance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Importance of Religion",
+    x = "Importance of Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+importance_plot
+
+
+attendance_plot <- attendance_table |>
+  
+  ggplot(aes(
+    x = attendance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religious Attendance",
+    x = "Attendance",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+attendance_plot
+
+
+religion_long <- religion_table |>
+  mutate(variable = "Religion") |>
+  rename(category = religion) |>
+  
+  bind_rows(
+    importance_table |>
+      mutate(variable = "Importance") |>
+      rename(category = importance)
+  ) |>
+  
+  bind_rows(
+    attendance_table |>
+      mutate(variable = "Attendance") |>
+      rename(category = attendance)
+  )
+
+
+combined_plot <- religion_long |>
+  
+  ggplot(aes(
+    x = category,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  facet_wrap(~ variable, scales = "free_x") +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Identification by Religious Characteristics",
+    x = NULL,
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 7   # <-- THIS shrinks religion labels
+    ),
+    
+    strip.text = element_text(face = "bold"),
+    
+    axis.title.y = element_text(size = 10),
+    plot.title = element_text(size = 12, face = "bold")
+  )
+
+combined_plot
+
+```
+
+## Analysis of Visualizations
+
+The final visualization combines all three dimensions—religious affiliation, importance, and attendance—into a single faceted figure.
+Each subplot displays a diverging bar chart where:
+  Republican identification is shown in red (positive values)
+  Democratic identification is shown in blue (negative values)
+  The center line represents balance between the two parties
+This format allows for direct comparison of political balance across the different religious dimensions.
+The plot shows that:
+  Higher religious engagement (importance and attendance) is associated with stronger Republican identification
+  Lower religious engagement is associated with stronger Democratic identification
+  Religious denomination differences exist but are less consistent than behavioral measures
+
+# (Title for Analysis)
+
+## Plan
+
+The goals of these visuals are to . Needs. Steps.
+
+```{r}
+```
+
+## Table 1 Analysis
+
+The initial table shows .
+
+```{r}
+```
+
+## Plot 2 Description and Analysis of Both Visualizations
+
+Plot has .
+
+When first looking at both data visualizations.
+
+# Appendix 1
+
+## Proportion of Votes by Candidates code to wrangle and create plots by Nick Gauthier
+
+#install.packages("haven") library("haven") data2024 \<- read_dta("anes_timeseries_2024_stata_20250808 (1).dta") #data2020 \<- read_dta("anes_timeseries_2020_stata_20220210.dta")
+
+library(tidyverse) library(rvest) library(dplyr) library(esquisse) library(plotly) library(knitr) library(kableExtra)
+
+nickData \<- data2024 \|\> #Here are the 9 questions I need to get the voter data from this survey #V241035 asks "PRE: ALREADY VOTED IN GENERAL ELECTION" #V241036 asks "PRE: CONFIRMATION VOTED (EARLY) IN NOVEMBER 5 ELECTION" #V241038 asks "PRE: DID R VOTE FOR PRESIDENT" #V241039 asks "PRE: FOR WHOM DID R VOTE FOR PRESIDENT" #V241042 asks "PRE: DOES R INTEND TO VOTE FOR PRESIDENT" #V241043 asks "PRE: FOR WHOM DOES R INTEND TO VOTE FOR PRESIDENT" #V242065 asks "POST: DID R VOTE IN THE 2024 ELECTION" #V242066 asks "POST: DID R VOTE FOR PRESIDENT" #V242067 asks "POST: FOR WHOM DID R VOTE FOR PRESIDENT" #Select and mutate these questions to make the answers numeric select("V241035", "V241036", "V241038", "V241039", "V241042", "V241043", "V242065", "V242066", "V242067") \|\> mutate(across(c(V241035, V241036, V241038, V241039, V241042, V241043, V242065, V242066, V242067), as.numeric))
+
+earlyVoters \<- nickData \|\> #Filter to those who answered and confirmed they voted early filter(V241035 == 1, V241036 == 1) \|\> #Select the question did they vote and if so who did they vote for select("V241038", "V241039") \|\> #Remove those who refused to answer who they voted for filter(V241039 != -9) \|\> #Select just the who they voted for column #Value will be -1 if inapplicable and because of filters only inapplicable if didn't vote #Values 1 through 6 are different candidates select(V241039) \|\> #Use count to get the number of answers each value has count(V241039) \|\> #Mutate to change V241039 to Candidate Names mutate(V241039 = recode(V241039, `-1` = "Did Not Vote", `1` = "Kamala D. Harris", `2` = "Donald J. Trump", `3` = "Robert F. Kennedy, Jr.", `4` = "Cornel R. West", `5` = "Jill E. Stein", `6` = "Another Candidate")) \|\> #Use rename to change column name to Candidate rename("Candidate" = V241039)
+
+intendedVoters \<- nickData \|\> #Filter out those who voted early filter(V241035 == 2 \| V241036 == 2) \|\> #Select the question will they vote and if so who will they vote for select("V241042", "V241043") \|\> #Remove those who refused to answer or didn't know if/who to vote filter(V241042 != -9, V241042 != -8, V241043 != -9, V241043 != -8) \|\> #Select just the who they will vote for column #Value will be -1 if inapplicable and because of filters only inapplicable if didn't vote #Values 1 through 6 are different candidates select(V241043) \|\> #Use count to get the number of answers each value has count(V241043) \|\> #Mutate to change V241043 to Candidate Names mutate(V241043 = recode(V241043, `-1` = "Did Not Vote", `1` = "Kamala D. Harris", `2` = "Donald J. Trump", `3` = "Robert F. Kennedy, Jr.", `4` = "Cornel R. West", `5` = "Jill E. Stein", `6` = "Another Candidate")) \|\> #Use rename to change column name to Candidate rename("Candidate" = V241043)
+
+preElectionData \<- intendedVoters \|\> #Use full_join to combine early voter data to show all pre election data full_join(earlyVoters) \|\> #group by candidate and summarize n as sum of n to add the totals together group_by(Candidate) \|\> summarize(n = sum(n)) \|\> #Mutate to create new column seeing the proportion each candidate got mutate("Pre Election Proportion" = n / sum(n)) \|\> rename("Pre Election Voters" = n)
+
+postElectionVoters \<- nickData \|\> #Filter out those who voted early #Do this because they weren't asked these questions in post filter(V241035 == 2 \| V241036 == 2) \|\> #Select the question did they vote, did they vote for president and if so who did they vote for select(V242065, V242066, V242067) \|\> #Filter out those who did not give an answer to whether they voted filter(V242065 != -9, V242065 != -8, V242065 != -7, V242065 != -6) \|\> #Select the did they vote for president and who they voted for president columns select(V242066, V242067) \|\> #Filter out those who did not give an answer for if/who they voted filter(V242066 != -1, V242067 != -9, V242067 != -8) \|\> #Select just the who they voted for column #Value will be -1 if inapplicable and because of filters only inapplicable if didn't vote #Values 1 through 6 are different candidates select(V242067) \|\> #Use count to get the number of answers each value has count(V242067) \|\> #Mutate to change V242067 to Candidate Names mutate(V242067 = recode(V242067, `-1` = "Did Not Vote", `1` = "Kamala D. Harris", `2` = "Donald J. Trump", `4` = "Cornel R. West", `5` = "Jill E. Stein", `6` = "Another Candidate")) \|\> #Use rename to change column names to Candidate and Post Election Voters rename("Candidate" = V242067)
+
+postElectionData \<- postElectionVoters \|\> #Use full_join to combine early voter data to show all votes full_join(earlyVoters) \|\> #group by candidate and summarize n as sum of n to add the totals together group_by(Candidate) \|\> summarize(n = sum(n)) \|\> #Mutate to create new column seeing the proportion each candidate got mutate("Post Election Proportion" = n / sum(n)) \|\> rename("Post Election Voters" = n)
+
+#read_html voting result votingResultList \<- read_html( x = "[https://uselectionatlas.org/RESULTS/national.php?year=2024&minper=0&off=0&elect=0"](https://uselectionatlas.org/RESULTS/national.php?year=2024&minper=0&off=0&elect=0") ) \|\> html_elements(css = "table") \|\> html_table()
+
+#bind_cols to turn votingResultList into a data frame votingResultRaw votingResultRaw \<- bind_cols(votingResultList\[\[2\]\])
+
+#Remove first 4 rows and all rows after 30 votingResult \<- votingResultRaw\[c(5:30),\] \|\> #Rename and select the columns required rename("Candidate" = 2, "Election Voters" = 5) \|\> select(Candidate, "Election Voters") \|\> #Remove commas to convert to numeric mutate(across("Election Voters", \~ gsub(",", "", .))) \|\> mutate(across("Election Voters", as.numeric))
+
+votingMajorCandidates \<- votingResult \|\> #Filter out minor candidates filter(Candidate == "Donald J. Trump" \| Candidate == "Kamala D. Harris" \| Candidate == "Robert F. Kennedy, Jr." \| Candidate == "Cornel R. West" \| Candidate == "Jill E. Stein")
+
+votingMinorCandidates \<- votingResult \|\> #Remove major candidates filter(Candidate != "Donald J. Trump" & Candidate != "Kamala D. Harris" & Candidate != "Robert F. Kennedy, Jr." & Candidate != "Cornel R. West" & Candidate != "Jill E. Stein") \|\> #Rename all renaming Candidates as same name to group mutate(Candidate = "Another Candidate") \|\> #Group by candidate and summarize Election voters to get one row #with sum of all votes from remaining candidates group_by(Candidate) \|\> summarize(`Election Voters` = sum(`Election Voters`))
+
+#read_html voter turnout voterTurnoutList \<- read_html( x = "[https://uselectionatlas.org/RESULTS/data.php?year=2024&datatype=national&def=vto&f=0&off=0&elect=0"](https://uselectionatlas.org/RESULTS/data.php?year=2024&datatype=national&def=vto&f=0&off=0&elect=0") ) \|\> html_elements(css = "table") \|\> html_table()
+
+#bind_cols to turn voterTurnoutList into a data frame voterTurnoutRaw voterTurnoutRaw \<- bind_cols(voterTurnoutList\[\[3\]\])
+
+#Remove first 2 rows voterTurnout \<- voterTurnoutRaw\[-c(1:2),\] \|\> #Rename and select the columns required rename("Candidate" = 3, "Eligible Voters" = 4, "Votes" = 6) \|\> select(Candidate, "Eligible Voters", Votes) \|\> #Filter candidate to get the required row filter(Candidate == "Total") \|\> #Remove commas to convert to numeric mutate(across(c("Eligible Voters", Votes), \~ gsub(",", "", .))) \|\> mutate(across(c("Eligible Voters", Votes), as.numeric)) \|\> #Create new column Election Voters #where the row has the value of the number of people who didn't vote mutate(`Election Voters` = `Eligible Voters` - Votes) \|\> #Mutate to change Total to Did Not Vote mutate(Candidate = recode(Candidate, "Total" = "Did Not Vote")) \|\> #Select the 2 required columns for the final table select(Candidate, "Election Voters")
+
+electionData \<- votingMajorCandidates \|\> #Use full_join to bring all election data into one data frame full_join(votingMinorCandidates) \|\> full_join(voterTurnout) \|\> #Create proportion column by dividing election voters by sum of all election voters mutate("Election Proportion" = `Election Voters` / sum(`Election Voters`))
+
+allElectionData \<- electionData \|\> #Use full join by Candidate to combine all data into one data frame full_join(postElectionData, by = "Candidate") \|\> full_join(preElectionData, by = "Candidate") \|\> #Round the proportions to 4 digits mutate(across("Post Election Proportion", function(x) round(x, 4))) \|\> mutate(across("Pre Election Proportion", function(x) round(x, 4))) \|\> mutate(across("Election Proportion", function(x) round(x, 4))) \|\> #Use select to reorder columns select(Candidate, "Pre Election Voters", "Pre Election Proportion", "Post Election Voters", "Post Election Proportion", "Election Voters", "Election Proportion")
+
+#Use kable and kable_classic to title, align, change font, and alternate row color allElectionData \|\> #Add commas back into large numbers mutate(across(where(is.numeric), \~ format(.x, big.mark = ","))) \|\> kable( caption = "Votes and Proportion of Votes by Candidate", align = "c", format = "latex" ) \|\> kable_classic( font_size = 18, lightable_options = "striped" )\|\> kable_styling(latex_options = c("scale_down", "hold_position"))
+
+electionDataPlot \<- allElectionData \|\> #rename the columns to make them better names for plot rename("Before" = "Pre Election Proportion", "Post" = "Post Election Proportion", "Real" = "Election Proportion") \|\> #pivot longer to have all proportions in one column #where the timing of the proportion is in another column pivot_longer(cols = c("Before", "Post", "Real"), names_to = "beforePostReal", values_to = "Proportion")
+
+#Create plot where x is the timing, y is the proportion, and it is grouped by candidate ggplot(electionDataPlot, aes(x = beforePostReal, y = Proportion, group = Candidate)) + #Use point to plot the proportions geom_point(aes(color = Candidate)) + #Use line to connect the points geom_line(aes(color = Candidate)) + #Use labs to give the plot a title, and rename the axes labs( title = "Proportion of Votes by Candidate", x = "Before Election vs Post Election vs Actual Election", y = "Proportion of Votes", color = "Candidate") + theme_bw()
+
+## Comparison of Party Identification by Religious Affiliation and Practice code to wrangle and generate the plots by Andrew Racek
+
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(haven)
+
+anes_data_2024 <- read_dta("C:\\Users\\atrac\\Downloads\\anes_timeseries_2024_stata_20250808 (1).dta")
+
+religion_data <- anes_data_2024 |>
+  select(
+    party_vote = V242067,
+    religion = V241422,
+    importance = V241420,
+    attendance = V241440
+  ) |>
+  mutate(across(everything(), as.numeric))
+
+#Recode party vote
+recode_party <- function(x) {
+  recode(x,
+         `1` = "Democrat",
+         `2` = "Republican",
+         `3` = "Other",
+         `4` = "Other",
+         `5` = "Other",
+         `6` = "Other",
+         .default = NA_character_
+  )
+}
+
+
+#Recode religion
+recode_religion <- function(x) {
+  recode(x,
+         `1` = "Protestant",
+         `2` = "Roman Catholic",
+         `3` = "Orthodox Christian",
+         `4` = "Latter-Day Saints (LDS)",
+         `5` = "Jewish",
+         `6` = "Muslim",
+         `7` = "Buddhist",
+         `8` = "Hindu",
+         `9` = "Atheist/Agnostic",
+         `10` = "Atheist/Agnostic",
+         `11` = "Something Else",
+         `12` = "Nothing in Particular",
+         .default = NA_character_
+  )
+}
+
+
+#Recode importance of religion
+recode_importance <- function(x) {
+  recode(x,
+         `1` = "Extremely Important",
+         `2` = "Very Important",
+         `3` = "Moderately Important",
+         `4` = "A Little Important",
+         `5` = "Not Important",
+         .default = NA_character_
+  )
+}
+
+
+#Recode attendance
+recode_attendance <- function(x) {
+  recode(x,
+         `1` = "More than once a week",
+         `2` = "Once a week",
+         `3` = "Once or twice a month",
+         `4` = "A few times a year",
+         `5` = "Once a year",
+         `6` = "Never",
+         .default = NA_character_
+  )
+}
+
+religion_clean <- religion_data |>
+  
+  #Remove refused, don't know, and inapplicable responses
+  filter(
+    !party_vote %in% c(-9, -8, -1),
+    !religion %in% c(-9, -8, -1),
+    !importance %in% c(-9, -8, -1),
+    !attendance %in% c(-9, -8, -1)
+  ) |>
+  
+  #Apply recodes
+  mutate(
+    party = recode_party(party_vote),
+    religion = recode_religion(religion),
+    importance = recode_importance(importance),
+    attendance = recode_attendance(attendance)
+  ) |>
+  
+  drop_na() |>
+  
+  #Set ordered factors for plotting
+  mutate(
+    importance = factor(
+      importance,
+      levels = c(
+        "Not Important",
+        "A Little Important",
+        "Moderately Important",
+        "Very Important",
+        "Extremely Important"
+      )
+    ),
+    
+    attendance = factor(
+      attendance,
+      levels = c(
+        "Never",
+        "Once a year",
+        "A few times a year",
+        "Once or twice a month",
+        "Once a week",
+        "More than once a week"
+      )
+    )
+  )
+
+religion_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(religion, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(religion) |>
+  mutate(proportion = count / sum(count))
+
+religion_table |>
+  kable(
+    caption = "Party Vote by Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+importance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(importance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(importance) |>
+  mutate(proportion = count / sum(count))
+
+importance_table |>
+  kable(
+    caption = "Party Vote by Importance of Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+attendance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(attendance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(attendance) |>
+  mutate(proportion = count / sum(count))
+
+attendance_table |>
+  kable(
+    caption = "Party Vote by Religious Attendance (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+religion_plot <- religion_table |>
+  
+  ggplot(aes(
+    x = religion,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religion",
+    x = "Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+religion_plot
+
+
+importance_plot <- importance_table |>
+  
+  ggplot(aes(
+    x = importance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Importance of Religion",
+    x = "Importance of Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+importance_plot
+
+
+attendance_plot <- attendance_table |>
+  
+  ggplot(aes(
+    x = attendance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religious Attendance",
+    x = "Attendance",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+attendance_plot
+
+
+religion_long <- religion_table |>
+  mutate(variable = "Religion") |>
+  rename(category = religion) |>
+  
+  bind_rows(
+    importance_table |>
+      mutate(variable = "Importance") |>
+      rename(category = importance)
+  ) |>
+  
+  bind_rows(
+    attendance_table |>
+      mutate(variable = "Attendance") |>
+      rename(category = attendance)
+  )
+
+
+combined_plot <- religion_long |>
+  
+  ggplot(aes(
+    x = category,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  facet_wrap(~ variable, scales = "free_x") +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Identification by Religious Characteristics",
+    x = NULL,
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 7   # <-- THIS shrinks religion labels
+    ),
+    
+    strip.text = element_text(face = "bold"),
+    
+    axis.title.y = element_text(size = 10),
+    plot.title = element_text(size = 12, face = "bold")
+  )
+
+combined_plot
+
+## Code to wrangle and generate the plots
+
+code
