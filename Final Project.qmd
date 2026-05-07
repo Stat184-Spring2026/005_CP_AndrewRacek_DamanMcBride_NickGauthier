@@ -10,7 +10,7 @@ execute:
 
 # Plan
 
-The goal of this quarto document is to create a pdf that will have four sections. The first section will intro the data set, describing it case and case attributes and how it meets FAIR and CARE standards. The second section will compare who people said they would vote for before the election and who they said they voted for after the 2024 presidential election with the actual results from the 2024 presidential election. The third section will . The last section will
+The goal of this quarto document is to create a pdf that will have three sections. The first section will intro the data set, describing it case and case attributes and how it meets FAIR and CARE standards. The second section will compare who people said they would vote for before the election and who they said they voted for after the 2024 presidential election with the actual results from the 2024 presidential election. The third section will compare party identification by religious affiliation and practice.
 
 # Data Set Introduction
 
@@ -356,49 +356,427 @@ Plot has a y value of the proportion of votes a candidate received where the x v
 
 When first looking at both data visualizations the clear change in proportion is seen between not voting in the surveys to not voting in the actual election. From this we learn that a lot of people when surveyed said they were going to vote for a candidate in both the pre and post election surveys but when looking at the actual election it seems that they were not motivated enough to actually go out and vote. This shows that the current methods of polling people must find additional ways to try and survey the likelihood of people actually going out and voting because when people are surveyed their answers may change from what they actually may end up voting. This is also seen in this data as in the polling Kamala D. Harris has a slight lead over Donald J. Trump but in the actual election Donald J. Trump ended up getting 2.3 million more votes. To account for the fact that people may answer differently in polls than what they may actually end up voting, surveyors must come up with new unique ways to try and get the actual answer from the people, which if I were to survey people about election data I would ask them questions like who they think will win or who they think people around them might be voting for and then comparing those to the election results to see if we get more accurate data.
 
-# (Title for Analysis)
+
+
+# Comparison of Party Identification by Religious Affiliation and Practice
 
 ## Plan
 
-The goals of these visuals are to . Needs. Steps
+The goal of these visuals is to examine how political party identification (Democrat vs Republican) varies across different dimensions of religion using the 2024 ANES data. Specifically, the analysis compares party identification across three religious variables: religious affiliation (denomination), perceived importance of religion in life, and frequency of religious attendance.
+This allows us to explore whether religion is associated not just with belief systems, but also with political alignment. The focus is on comparing proportions of Democrats and Republicans within each religious category rather than raw counts.
+To conduct this analysis, I used the 2024 ANES dataset and selected four variables: party vote, religious affiliation, religious importance, and religious attendance. I used tidyverse tools for cleaning, recoding, summarizing, and visualizing the data, along with knitr and kableExtra for table presentation.
+
+Steps
+
+1. Open R
+
+2. Load required libraries: tidyverse, rvest, dplyr, esquisse, plotly, knitr, kableExtra, haven
+
+3. Load the 2024 ANES dataset using read_dta()
+
+4. Select the four variables of interest:
+  Party vote (V242067)
+  Religion (V241422)
+  Importance of religion (V241420)
+  Religious attendance (V241440)
+  
+5. Remove missing, refused, don’t know, and inapplicable responses
+
+6. Recode:
+  Party vote into Democrat, Republican, and Other
+  Religion into named categories (e.g., Protestant, Catholic, Jewish, etc.)
+  Importance of religion into ordered levels from “Not Important” to “Extremely Important”
+  Attendance into ordered frequency categories from “Never” to “More than once a week”
+  
+7. Drop remaining NA values
+
+8. Filter dataset to only include Democrats and Republicans for comparison
+
+9. Group data by religious category and party
+
+10. Count responses within each group
+
+11. Compute proportions within each religious category
+
+12. Repeat the same process for:
+ Importance of religion
+ Religious attendance
+ 
+13. Create three summary tables using kable() and kable_classic()
+
+14. Create visualizations using ggplot2:
+ Stacked diverging bar charts (Democrats negative, Republicans positive)
+ 
+15. Combine all three variables into a faceted plot using facet_wrap()
+
+16. Format axes, labels, and color scheme (Democrat = blue, Republican = red)
 
 ```{r}
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(haven)
+
+anes_data_2024 <- read_dta("anes_timeseries_2024_stata_20250808 (1).dta")
+
+religion_data <- anes_data_2024 |>
+  select(
+    party_vote = V242067,
+    religion = V241422,
+    importance = V241420,
+    attendance = V241440
+  ) |>
+  mutate(across(everything(), as.numeric))
+
+#Recode party vote
+recode_party <- function(x) {
+  recode(x,
+         `1` = "Democrat",
+         `2` = "Republican",
+         `3` = "Other",
+         `4` = "Other",
+         `5` = "Other",
+         `6` = "Other",
+         .default = NA_character_
+  )
+}
+
+
+#Recode religion
+recode_religion <- function(x) {
+  recode(x,
+         `1` = "Protestant",
+         `2` = "Roman Catholic",
+         `3` = "Orthodox Christian",
+         `4` = "Latter-Day Saints (LDS)",
+         `5` = "Jewish",
+         `6` = "Muslim",
+         `7` = "Buddhist",
+         `8` = "Hindu",
+         `9` = "Atheist/Agnostic",
+         `10` = "Atheist/Agnostic",
+         `11` = "Something Else",
+         `12` = "Nothing in Particular",
+         .default = NA_character_
+  )
+}
+
+
+#Recode importance of religion
+recode_importance <- function(x) {
+  recode(x,
+         `1` = "Extremely Important",
+         `2` = "Very Important",
+         `3` = "Moderately Important",
+         `4` = "A Little Important",
+         `5` = "Not Important",
+         .default = NA_character_
+  )
+}
+
+
+#Recode attendance
+recode_attendance <- function(x) {
+  recode(x,
+         `1` = "More than once a week",
+         `2` = "Once a week",
+         `3` = "Once or twice a month",
+         `4` = "A few times a year",
+         `5` = "Once a year",
+         `6` = "Never",
+         .default = NA_character_
+  )
+}
+
+religion_clean <- religion_data |>
+  
+  #Remove refused, don't know, and inapplicable responses
+  filter(
+    !party_vote %in% c(-9, -8, -1),
+    !religion %in% c(-9, -8, -1),
+    !importance %in% c(-9, -8, -1),
+    !attendance %in% c(-9, -8, -1)
+  ) |>
+  
+  #Apply recodes
+  mutate(
+    party = recode_party(party_vote),
+    religion = recode_religion(religion),
+    importance = recode_importance(importance),
+    attendance = recode_attendance(attendance)
+  ) |>
+  
+  drop_na() |>
+  
+  #Set ordered factors for plotting
+  mutate(
+    importance = factor(
+      importance,
+      levels = c(
+        "Not Important",
+        "A Little Important",
+        "Moderately Important",
+        "Very Important",
+        "Extremely Important"
+      )
+    ),
+    
+    attendance = factor(
+      attendance,
+      levels = c(
+        "Never",
+        "Once a year",
+        "A few times a year",
+        "Once or twice a month",
+        "Once a week",
+        "More than once a week"
+      )
+    )
+  )
+
+religion_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(religion, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(religion) |>
+  mutate(proportion = count / sum(count))
+
+religion_table |>
+  kable(
+    caption = "Party Vote by Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+importance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(importance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(importance) |>
+  mutate(proportion = count / sum(count))
+
+importance_table |>
+  kable(
+    caption = "Party Vote by Importance of Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+attendance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(attendance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(attendance) |>
+  mutate(proportion = count / sum(count))
+
+attendance_table |>
+  kable(
+    caption = "Party Vote by Religious Attendance (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+
 ```
 
-## Table 1 Analysis
+## Tables Analysis
 
-The initial table shows .
+Across all three tables, clear patterns emerge between religion and political affiliation.
+Religious affiliation shows variation in party identification, with some traditions leaning more Democratic and others more Republican with varying intensity. However, the strongest differences appear when looking at religious behavior rather than denomination alone.
+Religious importance shows a noticeable shift: respondents who say religion is “Extremely Important” tend to be more Republican-leaning, while those who report lower importance show more Democratic support.
+Religious attendance follows a similar pattern. More frequent attendance is associated with higher Republican identification, while infrequent or no attendance corresponds more strongly with Democratic identification, though the difference is smaller than it is for religious importance.
+Overall, behavioral measures of religion (importance and attendance) appear to more strongly predict party identification than religious denomination alone.
 
 ```{r}
+religion_plot <- religion_table |>
+  
+  ggplot(aes(
+    x = religion,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religion",
+    x = "Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+religion_plot
+
+
+importance_plot <- importance_table |>
+  
+  ggplot(aes(
+    x = importance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Importance of Religion",
+    x = "Importance of Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+importance_plot
+
+
+attendance_plot <- attendance_table |>
+  
+  ggplot(aes(
+    x = attendance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religious Attendance",
+    x = "Attendance",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+attendance_plot
+
+
+religion_long <- religion_table |>
+  mutate(variable = "Religion") |>
+  rename(category = religion) |>
+  
+  bind_rows(
+    importance_table |>
+      mutate(variable = "Importance") |>
+      rename(category = importance)
+  ) |>
+  
+  bind_rows(
+    attendance_table |>
+      mutate(variable = "Attendance") |>
+      rename(category = attendance)
+  )
+
+
+combined_plot <- religion_long |>
+  
+  ggplot(aes(
+    x = category,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  facet_wrap(~ variable, scales = "free_x") +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Identification by Religious Characteristics",
+    x = NULL,
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 7   # <-- THIS shrinks religion labels
+    ),
+    
+    strip.text = element_text(face = "bold"),
+    
+    axis.title.y = element_text(size = 10),
+    plot.title = element_text(size = 12, face = "bold")
+  )
+
+combined_plot
+
 ```
 
-## Plot 2 Description and Analysis of Both Visualizations
+## Analysis of Visualizations
 
-Plot has .
-
-When first looking at both data visualizations.
-
-# (Title for Analysis)
-
-## Plan
-
-The goals of these visuals are to . Needs. Steps.
-
-```{r}
-```
-
-## Table 1 Analysis
-
-The initial table shows .
-
-```{r}
-```
-
-## Plot 2 Description and Analysis of Both Visualizations
-
-Plot has .
-
-When first looking at both data visualizations.
+The final visualization combines all three dimensions—religious affiliation, importance, and attendance—into a single faceted figure.
+Each subplot displays a diverging bar chart where:
+  Republican identification is shown in red (positive values)
+  Democratic identification is shown in blue (negative values)
+  The center line represents balance between the two parties
+This format allows for direct comparison of political balance across the different religious dimensions.
+The plot shows that:
+  Higher religious engagement (importance and attendance) is associated with stronger Republican identification
+  Lower religious engagement is associated with stronger Democratic identification
+  Religious denomination differences exist but are less consistent than behavioral measures
 
 # Appendix 1
 
@@ -446,10 +824,344 @@ electionDataPlot \<- allElectionData \|\> #rename the columns to make them bette
 
 #Create plot where x is the timing, y is the proportion, and it is grouped by candidate ggplot(electionDataPlot, aes(x = beforePostReal, y = Proportion, group = Candidate)) + #Use point to plot the proportions geom_point(aes(color = Candidate)) + #Use line to connect the points geom_line(aes(color = Candidate)) + #Use labs to give the plot a title, and rename the axes labs( title = "Proportion of Votes by Candidate", x = "Before Election vs Post Election vs Actual Election", y = "Proportion of Votes", color = "Candidate") + theme_bw()
 
-## Code to wrangle and generate the plots
+## Comparison of Party Identification by Religious Affiliation and Practice code to wrangle and generate the plots by Andrew Racek
 
-code
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(haven)
 
-## Code to wrangle and generate the plots
+anes_data_2024 <- read_dta("C:\\Users\\atrac\\Downloads\\anes_timeseries_2024_stata_20250808 (1).dta")
 
-code
+religion_data <- anes_data_2024 |>
+  select(
+    party_vote = V242067,
+    religion = V241422,
+    importance = V241420,
+    attendance = V241440
+  ) |>
+  mutate(across(everything(), as.numeric))
+
+#Recode party vote
+recode_party <- function(x) {
+  recode(x,
+         `1` = "Democrat",
+         `2` = "Republican",
+         `3` = "Other",
+         `4` = "Other",
+         `5` = "Other",
+         `6` = "Other",
+         .default = NA_character_
+  )
+}
+
+
+#Recode religion
+recode_religion <- function(x) {
+  recode(x,
+         `1` = "Protestant",
+         `2` = "Roman Catholic",
+         `3` = "Orthodox Christian",
+         `4` = "Latter-Day Saints (LDS)",
+         `5` = "Jewish",
+         `6` = "Muslim",
+         `7` = "Buddhist",
+         `8` = "Hindu",
+         `9` = "Atheist/Agnostic",
+         `10` = "Atheist/Agnostic",
+         `11` = "Something Else",
+         `12` = "Nothing in Particular",
+         .default = NA_character_
+  )
+}
+
+
+#Recode importance of religion
+recode_importance <- function(x) {
+  recode(x,
+         `1` = "Extremely Important",
+         `2` = "Very Important",
+         `3` = "Moderately Important",
+         `4` = "A Little Important",
+         `5` = "Not Important",
+         .default = NA_character_
+  )
+}
+
+
+#Recode attendance
+recode_attendance <- function(x) {
+  recode(x,
+         `1` = "More than once a week",
+         `2` = "Once a week",
+         `3` = "Once or twice a month",
+         `4` = "A few times a year",
+         `5` = "Once a year",
+         `6` = "Never",
+         .default = NA_character_
+  )
+}
+
+religion_clean <- religion_data |>
+  
+  #Remove refused, don't know, and inapplicable responses
+  filter(
+    !party_vote %in% c(-9, -8, -1),
+    !religion %in% c(-9, -8, -1),
+    !importance %in% c(-9, -8, -1),
+    !attendance %in% c(-9, -8, -1)
+  ) |>
+  
+  #Apply recodes
+  mutate(
+    party = recode_party(party_vote),
+    religion = recode_religion(religion),
+    importance = recode_importance(importance),
+    attendance = recode_attendance(attendance)
+  ) |>
+  
+  drop_na() |>
+  
+  #Set ordered factors for plotting
+  mutate(
+    importance = factor(
+      importance,
+      levels = c(
+        "Not Important",
+        "A Little Important",
+        "Moderately Important",
+        "Very Important",
+        "Extremely Important"
+      )
+    ),
+    
+    attendance = factor(
+      attendance,
+      levels = c(
+        "Never",
+        "Once a year",
+        "A few times a year",
+        "Once or twice a month",
+        "Once a week",
+        "More than once a week"
+      )
+    )
+  )
+
+religion_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(religion, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(religion) |>
+  mutate(proportion = count / sum(count))
+
+religion_table |>
+  kable(
+    caption = "Party Vote by Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+importance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(importance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(importance) |>
+  mutate(proportion = count / sum(count))
+
+importance_table |>
+  kable(
+    caption = "Party Vote by Importance of Religion (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+attendance_table <- religion_clean |>
+  filter(party %in% c("Democrat", "Republican")) |>
+  group_by(attendance, party) |>
+  summarize(count = n(), .groups = "drop") |>
+  group_by(attendance) |>
+  mutate(proportion = count / sum(count))
+
+attendance_table |>
+  kable(
+    caption = "Party Vote by Religious Attendance (Democrat vs Republican)",
+    align = "c"
+  ) |>
+  kable_classic(
+    font_size = 12,
+    lightable_options = "striped"
+  ) |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+
+religion_plot <- religion_table |>
+  
+  ggplot(aes(
+    x = religion,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religion",
+    x = "Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+religion_plot
+
+
+importance_plot <- importance_table |>
+  
+  ggplot(aes(
+    x = importance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Importance of Religion",
+    x = "Importance of Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+importance_plot
+
+
+attendance_plot <- attendance_table |>
+  
+  ggplot(aes(
+    x = attendance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religious Attendance",
+    x = "Attendance",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+attendance_plot
+
+
+religion_long <- religion_table |>
+  mutate(variable = "Religion") |>
+  rename(category = religion) |>
+  
+  bind_rows(
+    importance_table |>
+      mutate(variable = "Importance") |>
+      rename(category = importance)
+  ) |>
+  
+  bind_rows(
+    attendance_table |>
+      mutate(variable = "Attendance") |>
+      rename(category = attendance)
+  )
+
+
+combined_plot <- religion_long |>
+  
+  ggplot(aes(
+    x = category,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  facet_wrap(~ variable, scales = "free_x") +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Identification by Religious Characteristics",
+    x = NULL,
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 7   # <-- THIS shrinks religion labels
+    ),
+    
+    strip.text = element_text(face = "bold"),
+    
+    axis.title.y = element_text(size = 10),
+    plot.title = element_text(size = 12, face = "bold")
+  )
+
+combined_plot
+
