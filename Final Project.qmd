@@ -10,7 +10,7 @@ execute:
 
 # Plan
 
-The goal of this quarto document is to create a pdf that will have four sections. The first section will intro the data set, describing it case and case attributes and how it meets FAIR and CARE standards. The second section will compare who people said they would vote for before the election and who they said they voted for after the 2024 presidential election with the actual results from the 2024 presidential election. The third section will . The last section will
+The goal of this quarto document is to create a pdf that will have three sections. The first section will intro the data set, describing it case and case attributes and how it meets FAIR and CARE standards. The second section will compare who people said they would vote for before the election and who they said they voted for after the 2024 presidential election with the actual results from the 2024 presidential election. The third section will compare party identification by religious affiliation and practice.
 
 # Data Set Introduction
 
@@ -356,6 +356,8 @@ Plot has a y value of the proportion of votes a candidate received where the x v
 
 When first looking at both data visualizations the clear change in proportion is seen between not voting in the surveys to not voting in the actual election. From this we learn that a lot of people when surveyed said they were going to vote for a candidate in both the pre and post election surveys but when looking at the actual election it seems that they were not motivated enough to actually go out and vote. This shows that the current methods of polling people must find additional ways to try and survey the likelihood of people actually going out and voting because when people are surveyed their answers may change from what they actually may end up voting. This is also seen in this data as in the polling Kamala D. Harris has a slight lead over Donald J. Trump but in the actual election Donald J. Trump ended up getting 2.3 million more votes. To account for the fact that people may answer differently in polls than what they may actually end up voting, surveyors must come up with new unique ways to try and get the actual answer from the people, which if I were to survey people about election data I would ask them questions like who they think will win or who they think people around them might be voting for and then comparing those to the election results to see if we get more accurate data.
 
+
+
 # Comparison of Party Identification by Religious Affiliation and Practice
 
 ## Plan
@@ -365,32 +367,48 @@ This allows us to explore whether religion is associated not just with belief sy
 To conduct this analysis, I used the 2024 ANES dataset and selected four variables: party vote, religious affiliation, religious importance, and religious attendance. I used tidyverse tools for cleaning, recoding, summarizing, and visualizing the data, along with knitr and kableExtra for table presentation.
 
 Steps
+
 1. Open R
+
 2. Load required libraries: tidyverse, rvest, dplyr, esquisse, plotly, knitr, kableExtra, haven
+
 3. Load the 2024 ANES dataset using read_dta()
+
 4. Select the four variables of interest:
   Party vote (V242067)
   Religion (V241422)
   Importance of religion (V241420)
   Religious attendance (V241440)
+  
 5. Remove missing, refused, don’t know, and inapplicable responses
+
 6. Recode:
   Party vote into Democrat, Republican, and Other
   Religion into named categories (e.g., Protestant, Catholic, Jewish, etc.)
   Importance of religion into ordered levels from “Not Important” to “Extremely Important”
   Attendance into ordered frequency categories from “Never” to “More than once a week”
+  
 7. Drop remaining NA values
+
 8. Filter dataset to only include Democrats and Republicans for comparison
+
 9. Group data by religious category and party
+
 10. Count responses within each group
+
 11. Compute proportions within each religious category
+
 12. Repeat the same process for:
  Importance of religion
  Religious attendance
+ 
 13. Create three summary tables using kable() and kable_classic()
+
 14. Create visualizations using ggplot2:
  Stacked diverging bar charts (Democrats negative, Republicans positive)
+ 
 15. Combine all three variables into a faceted plot using facet_wrap()
+
 16. Format axes, labels, and color scheme (Democrat = blue, Republican = red)
 
 ```{r}
@@ -400,7 +418,7 @@ library(knitr)
 library(kableExtra)
 library(haven)
 
-anes_data_2024 <- read_dta("C:\\Users\\atrac\\Downloads\\anes_timeseries_2024_stata_20250808 (1).dta")
+anes_data_2024 <- read_dta("anes_timeseries_2024_stata_20250808 (1).dta")
 
 religion_data <- anes_data_2024 |>
   select(
@@ -759,28 +777,6 @@ The plot shows that:
   Higher religious engagement (importance and attendance) is associated with stronger Republican identification
   Lower religious engagement is associated with stronger Democratic identification
   Religious denomination differences exist but are less consistent than behavioral measures
-
-# (Title for Analysis)
-
-## Plan
-
-The goals of these visuals are to . Needs. Steps.
-
-```{r}
-```
-
-## Table 1 Analysis
-
-The initial table shows .
-
-```{r}
-```
-
-## Plot 2 Description and Analysis of Both Visualizations
-
-Plot has .
-
-When first looking at both data visualizations.
 
 # Appendix 1
 
@@ -1169,6 +1165,3 @@ combined_plot <- religion_long |>
 
 combined_plot
 
-## Code to wrangle and generate the plots
-
-code
