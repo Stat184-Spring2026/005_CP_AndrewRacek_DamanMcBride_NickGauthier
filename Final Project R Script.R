@@ -1,8 +1,5 @@
 library(tidyverse)
-library(rvest)
 library(dplyr)
-library(esquisse)
-library(plotly)
 library(knitr)
 library(kableExtra)
 library(haven)
@@ -127,23 +124,6 @@ religion_clean <- religion_data |>
 
 
 
-religion_table <- religion_clean |>
-  
-  filter(party %in% c("Democrat", "Republican")) |>
-  
-  group_by(religion, party) |>
-  
-  summarize(
-    count = n(),
-    .groups = "drop"
-  ) |>
-  
-  group_by(religion) |>
-  
-  mutate(
-    proportion = count / sum(count)
-  )
-
 
 religion_table |>
   kable(
@@ -157,25 +137,6 @@ religion_table |>
   kable_styling(latex_options = c("scale_down", "hold_position"))
 
 
-importance_table <- religion_clean |>
-  
-  # Keep only Dem and Rep
-  filter(party %in% c("Democrat", "Republican")) |>
-  
-  group_by(importance, party) |>
-  
-  summarize(
-    count = n(),
-    .groups = "drop"
-  ) |>
-  
-  group_by(importance) |>
-  
-  mutate(
-    proportion = count / sum(count)
-  )
-
-
 importance_table |>
   kable(
     caption = "Party Vote by Importance of Religion (Democrat vs Republican)",
@@ -186,24 +147,6 @@ importance_table |>
     lightable_options = "striped"
   ) |>
   kable_styling(latex_options = c("scale_down", "hold_position"))
-
-attendance_table <- religion_clean |>
-  
-  # Keep only Dem and Rep
-  filter(party %in% c("Democrat", "Republican")) |>
-  
-  group_by(attendance, party) |>
-  
-  summarize(
-    count = n(),
-    .groups = "drop"
-  ) |>
-  
-  group_by(attendance) |>
-  
-  mutate(
-    proportion = count / sum(count)
-  )
 
 
 attendance_table |>
@@ -216,4 +159,162 @@ attendance_table |>
     lightable_options = "striped"
   ) |>
   kable_styling(latex_options = c("scale_down", "hold_position"))
+
+
+
+
+
+religion_plot <- religion_table |>
+  
+  ggplot(aes(
+    x = religion,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religion",
+    x = "Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+religion_plot
+
+
+importance_plot <- importance_table |>
+  
+  ggplot(aes(
+    x = importance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Importance of Religion",
+    x = "Importance of Religion",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+importance_plot
+
+
+attendance_plot <- attendance_table |>
+  
+  ggplot(aes(
+    x = attendance,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religious Attendance",
+    x = "Attendance",
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+attendance_plot
+
+
+religion_long <- religion_table |>
+  mutate(variable = "Religion") |>
+  rename(category = religion) |>
+  
+  bind_rows(
+    importance_table |>
+      mutate(variable = "Importance") |>
+      rename(category = importance)
+  ) |>
+  
+  bind_rows(
+    attendance_table |>
+      mutate(variable = "Attendance") |>
+      rename(category = attendance)
+  )
+
+
+combined_plot <- religion_long |>
+  
+  ggplot(aes(
+    x = category,
+    y = ifelse(party == "Democrat", -proportion, proportion),
+    fill = party
+  )) +
+  
+  geom_col() +
+  
+  facet_wrap(~ variable, scales = "free_x") +
+  
+  scale_fill_manual(values = c(
+    "Democrat" = "blue",
+    "Republican" = "red"
+  )) +
+  
+  scale_y_continuous(
+    breaks = c(-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75),
+    labels = c("75%", "50%", "25%", "0", "25%", "50%", "75%"),
+    name = "Proportion of Votes"
+  ) +
+  
+  labs(
+    title = "Party Vote by Religious Characteristics",
+    x = NULL,
+    fill = "Party"
+  ) +
+  
+  theme_bw() +
+  
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold")
+  )
+
+combined_plot
 
