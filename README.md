@@ -21,7 +21,7 @@ Currently we are finishing up with our QMD file which will create a pdf that wil
 
 ## Repo Structure
 
-The most important element will be the final project qmd file which will contain our plan, our tables, and graphs will can all be rendered into a pdf file.
+The most important element will be the final project qmd file which will contain our plan, our tables, and graphs which can all be rendered into a pdf file.
 
 
 ## Authors
